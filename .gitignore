@@ -1,0 +1,31 @@
+# Gradle and generated output
+.gradle/
+**/.gradle/
+build/
+**/build/
+out/
+**/out/
+run/
+**/run/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Logs, crashes, and local configuration
+*.log
+crash-reports/
+logs/
+config/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+

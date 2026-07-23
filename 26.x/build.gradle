@@ -1,0 +1,83 @@
+plugins {
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = "${project.archives_base_name}-${project.minecraft_version}"
+}
+
+def minecraft26_2 = project.minecraft_version == '26.2'
+
+repositories {
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/releases/'
+    }
+}
+
+loom {
+    splitEnvironmentSourceSets()
+
+    mods {
+        ehud {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
+
+sourceSets.client.java.srcDir('src/clientModern/java')
+sourceSets.client.java.srcDir('src/poseModern/java')
+sourceSets.client.java.srcDir(minecraft26_2 ? 'src/client26_2/java' : 'src/client26_1/java')
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Kept local so a transient TerraformersMC Maven outage cannot make the
+    // optional configuration integration fail the whole build.
+    compileOnly files("libs/modmenu-${project.modmenu_version}.jar")
+    runtimeOnly files("libs/modmenu-${project.modmenu_version}.jar")
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'minecraft_version', project.minecraft_version
+
+    filesMatching('fabric.mod.json') {
+        expand version: inputs.properties.version, minecraft_version: inputs.properties.minecraft_version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+    options.encoding = 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+    from('README.md')
+    from('MOD_DESCRIPTION.md')
+    from('FEATURES.md')
+    from('CHANGELOG.md')
+    from('LICENSE')
+}
+
+publishing {
+    publications {
+        create('mavenJava', MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
+}

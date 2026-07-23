@@ -1,0 +1,14 @@
+{
+  "modmenu.descriptionTranslation.ehud": "A context-sensitive HUD that explains what is happening and why.",
+  "key.category.ehud": "E HUD",
+  "key.ehud.open_config": "Open E HUD settings",
+  "key.ehud.inspect": "Hold for detailed inspection",
+  "key.ehud.pin": "Pin current target",
+  "ehud.config.title": "E HUD",
+  "ehud.config.advanced": "Advanced Mode",
+  "ehud.config.debug": "Debug Mode",
+  "ehud.config.save": "Save",
+  "ehud.config.cancel": "Cancel",
+  "ehud.config.reset": "Reset",
+  "ehud.config.preview": "Live Preview"
+}

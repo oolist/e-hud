@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "ehud",
+  "version": "${version}",
+  "name": "E HUD",
+  "description": "One intelligent HUD that explains everything without displaying everything at once.",
+  "authors": [
+    "oolist"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/project/ratzt04c",
+    "sources": "https://modrinth.com/project/ratzt04c",
+    "discord": "https://discord.gg/ZYK4UzsHCr"
+  },
+  "license": "Oolist Project License v1.0",
+  "icon": "assets/ehud/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.oolist.ehud.EHud"
+    ],
+    "client": [
+      "dev.oolist.ehud.client.EHudClient"
+    ],
+    "modmenu": [
+      "dev.oolist.ehud.client.compat.EHudModMenu"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.2",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

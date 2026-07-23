@@ -1,0 +1,173 @@
+package dev.oolist.ehud.client.config;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import dev.oolist.ehud.EHud;
+import net.fabricmc.loader.api.FabricLoader;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Stream;
+
+public final class ConfigManager {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final DateTimeFormatter BACKUP_NAME =
+            DateTimeFormatter.ofPattern("uuuu-MM-dd_HH-mm-ss").withZone(ZoneOffset.UTC);
+    private static final Path ROOT = FabricLoader.getInstance().getConfigDir().resolve("ehud");
+    private static final Path CONFIG_FILE = ROOT.resolve("config.json");
+    private static final Path PRESET_DIR = ROOT.resolve("presets");
+    private static final Path BACKUP_DIR = ROOT.resolve("backups");
+
+    private static EHudConfig config = new EHudConfig();
+
+    private ConfigManager() {
+    }
+
+    public static EHudConfig get() {
+        return config;
+    }
+
+    public static void replace(EHudConfig replacement) {
+        replacement.ensureDefaults();
+        config = replacement;
+    }
+
+    public static void load() {
+        try {
+            Files.createDirectories(ROOT);
+            Files.createDirectories(PRESET_DIR);
+            Files.createDirectories(BACKUP_DIR);
+            if (Files.exists(CONFIG_FILE)) {
+                EHudConfig loaded = GSON.fromJson(Files.readString(CONFIG_FILE), EHudConfig.class);
+                if (loaded != null) {
+                    loaded.ensureDefaults();
+                    config = loaded;
+                }
+            } else {
+                save();
+            }
+        } catch (Exception exception) {
+            EHud.LOGGER.error("Could not load E HUD configuration; using defaults.", exception);
+            config = new EHudConfig();
+        }
+    }
+
+    public static void save() {
+        try {
+            Files.createDirectories(ROOT);
+            maybeCreateScheduledBackup();
+            writeAtomically(CONFIG_FILE, GSON.toJson(config));
+        } catch (IOException exception) {
+            EHud.LOGGER.error("Could not save E HUD configuration.", exception);
+        }
+    }
+
+    public static Path exportPreset(String requestedName) throws IOException {
+        return exportPreset(config, requestedName);
+    }
+
+    public static Path exportPreset(EHudConfig source, String requestedName) throws IOException {
+        Files.createDirectories(PRESET_DIR);
+        String safeName = sanitizeName(requestedName == null || requestedName.isBlank()
+                ? source.activeProfile : requestedName);
+        Path destination = PRESET_DIR.resolve(safeName + ".txt");
+        writeAtomically(destination, GSON.toJson(source));
+        return destination;
+    }
+
+    public static List<Path> listPresets() throws IOException {
+        Files.createDirectories(PRESET_DIR);
+        try (Stream<Path> stream = Files.list(PRESET_DIR)) {
+            return stream.filter(Files::isRegularFile)
+                    .filter(path -> path.getFileName().toString().endsWith(".txt"))
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString().toLowerCase()))
+                    .toList();
+        }
+    }
+
+    public static Path presetDirectory() {
+        return PRESET_DIR;
+    }
+
+    public static Path presetByName(String name) throws IOException {
+        String expected = sanitizeName(name) + ".txt";
+        return listPresets().stream()
+                .filter(path -> path.getFileName().toString().equalsIgnoreCase(expected))
+                .findFirst().orElseThrow(() -> new IOException("Preset not found: " + name));
+    }
+
+    public static EHudConfig importPreset(Path source) throws IOException {
+        EHudConfig imported = GSON.fromJson(Files.readString(source, StandardCharsets.UTF_8), EHudConfig.class);
+        if (imported == null) {
+            throw new IOException("Preset did not contain a valid E HUD configuration.");
+        }
+        imported.ensureDefaults();
+        return imported;
+    }
+
+    public static Path createBackup(String reason) throws IOException {
+        Files.createDirectories(BACKUP_DIR);
+        String name = BACKUP_NAME.format(Instant.now()) + "_" + sanitizeName(reason) + ".json";
+        Path destination = BACKUP_DIR.resolve(name);
+        if (Files.exists(CONFIG_FILE)) {
+            Files.copy(CONFIG_FILE, destination, StandardCopyOption.REPLACE_EXISTING);
+        } else {
+            Files.writeString(destination, GSON.toJson(config), StandardCharsets.UTF_8);
+        }
+        return destination;
+    }
+
+    public static Path rootDirectory() {
+        return ROOT;
+    }
+
+    private static void maybeCreateScheduledBackup() throws IOException {
+        if (!config.weeklyBackups || !Files.exists(CONFIG_FILE)) {
+            return;
+        }
+        long newestBackup = 0L;
+        if (Files.exists(BACKUP_DIR)) {
+            try (Stream<Path> stream = Files.list(BACKUP_DIR)) {
+                newestBackup = stream.filter(Files::isRegularFile)
+                        .map(path -> {
+                            try {
+                                return Files.getLastModifiedTime(path).toMillis();
+                            } catch (IOException ignored) {
+                                return 0L;
+                            }
+                        })
+                        .max(Comparator.naturalOrder())
+                        .orElse(0L);
+            }
+        }
+        long interval = Math.max(1, config.backupIntervalDays) * 86_400_000L;
+        if (System.currentTimeMillis() - newestBackup >= interval) {
+            createBackup("scheduled");
+        }
+    }
+
+    private static void writeAtomically(Path destination, String content) throws IOException {
+        Files.createDirectories(destination.getParent());
+        Path temporary = destination.resolveSibling(destination.getFileName() + ".tmp");
+        Files.writeString(temporary, content, StandardCharsets.UTF_8);
+        try {
+            Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException ignored) {
+            Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static String sanitizeName(String input) {
+        String sanitized = input.replaceAll("[^a-zA-Z0-9._-]", "_");
+        return sanitized.isBlank() ? "preset" : sanitized;
+    }
+}
