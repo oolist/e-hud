@@ -19,7 +19,7 @@ YOUTUBE_CHANNEL_ID = "UCA84v4QhTXZJAdov2jX_E3g"
 YOUTUBE_FEED = (
     f"https://www.youtube.com/feeds/videos.xml?channel_id={YOUTUBE_CHANNEL_ID}"
 )
-MODRINTH_VERSIONS = "https://api.modrinth.com/v2/project/ratzt04c/version"
+MODRINTH_VERSIONS = "https://api.modrinth.com/v2/project/e-hud/version"
 MODRINTH_PROJECT = "https://modrinth.com/mod/e-hud"
 STATE_FILE = Path(".github/notification-state.json")
 USER_AGENT = "E-HUD-Discord-Notifier/1.0 (https://github.com/oolist/e-hud)"
@@ -281,7 +281,13 @@ def process_youtube(state: dict[str, Any]) -> None:
 
 
 def process_modrinth(state: dict[str, Any]) -> None:
-    versions = request_json(MODRINTH_VERSIONS)
+    try:
+        versions = request_json(MODRINTH_VERSIONS)
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            print("E HUD is not public through the Modrinth API yet; checking again later")
+            return
+        raise
     if not isinstance(versions, list):
         raise RuntimeError("Unexpected response from Modrinth")
 
