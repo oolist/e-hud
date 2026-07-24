@@ -59,7 +59,7 @@ def format_count(value: int) -> str:
 
 
 def build_channel_name(downloads: int) -> str:
-    return f"📥 Modrinth Downloads: {format_count(downloads)}"
+    return f"📥 Oolist Downloads: {format_count(downloads)}"
 
 
 def get_total_downloads(projects: list[str], modrinth_token: str = "") -> int:
@@ -101,7 +101,10 @@ def update_discord_channel(channel_id: str, bot_token: str, desired_name: str) -
 def main() -> int:
     bot_token = os.getenv("DISCORD_COUNTER_BOT_TOKEN", "").strip()
     channel_id = os.getenv("DISCORD_DOWNLOAD_CHANNEL_ID", "").strip()
-    projects_value = os.getenv("MODRINTH_PROJECTS", "e-hud")
+    projects_value = os.getenv(
+        "MODRINTH_PROJECTS",
+        "animal-hud,break-to-teleport,e-hud,oolist-optimize",
+    )
     modrinth_token = os.getenv("MODRINTH_TOKEN", "").strip()
 
     if not bot_token or not channel_id:

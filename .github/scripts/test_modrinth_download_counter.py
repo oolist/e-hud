@@ -21,7 +21,7 @@ class CounterTests(unittest.TestCase):
     def test_channel_name(self):
         self.assertEqual(
             counter.build_channel_name(1234567),
-            "📥 Modrinth Downloads: 1,234,567",
+            "📥 Oolist Downloads: 1,234,567",
         )
 
 
