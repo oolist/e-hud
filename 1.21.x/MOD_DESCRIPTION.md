@@ -82,5 +82,6 @@ E HUD is designed for keyboard and mouse. Dedicated controller navigation is not
 ## Links
 
 - Author: **oolist**
-- Project/source: https://modrinth.com/project/ratzt04c
+- Project: https://modrinth.com/mod/e-hud
+- Source: https://github.com/oolist/e-hud
 - Discord: https://discord.gg/ZYK4UzsHCr

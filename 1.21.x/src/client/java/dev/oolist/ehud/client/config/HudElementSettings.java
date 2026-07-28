@@ -8,7 +8,17 @@ public final class HudElementSettings {
     public int color = 0;
     public String condition = "RELEVANT";
 
+    public void ensureDefaults() {
+        xOffset = Math.max(-10_000, Math.min(10_000, xOffset));
+        yOffset = Math.max(-10_000, Math.min(10_000, yOffset));
+        scale = Float.isFinite(scale) ? Math.max(0.5F, Math.min(2.0F, scale)) : 1.0F;
+        if (condition == null || condition.isBlank()) {
+            condition = "RELEVANT";
+        }
+    }
+
     public HudElementSettings copy() {
+        ensureDefaults();
         HudElementSettings copy = new HudElementSettings();
         copy.enabled = enabled;
         copy.xOffset = xOffset;

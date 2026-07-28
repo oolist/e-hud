@@ -1,0 +1,53 @@
+name: Publish E HUD release to Modrinth
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: GitHub release tag containing the 14 verified jars
+        required: true
+        default: v0.1.1-alpha
+      release_version:
+        description: E HUD version without the leading v
+        required: true
+        default: 0.1.1-alpha
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-modrinth-${{ inputs.release_version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the release source
+        uses: actions/checkout@v4
+
+      - name: Download the verified GitHub release files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ inputs.release_tag }}" \
+            --pattern "e-hud-*-${{ inputs.release_version }}.jar" \
+            --dir dist
+
+      - name: Confirm all release files are present
+        shell: bash
+        run: |
+          count="$(find dist -maxdepth 1 -type f -name 'e-hud-*.jar' | wc -l)"
+          test "$count" -eq 14
+
+      - name: Publish separate alpha versions to Modrinth
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          python .github/scripts/publish_modrinth_release.py \
+            --version "${{ inputs.release_version }}" \
+            --artifacts dist \
+            --changelog "release-notes/${{ inputs.release_version }}.md"

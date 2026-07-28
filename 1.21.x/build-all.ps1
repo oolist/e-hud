@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $wrapperJar = Join-Path $projectRoot 'gradle\wrapper\gradle-wrapper.jar'
 $releaseDir = Join-Path $projectRoot 'releases'
+$modVersion = '0.1.1-alpha'
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
 $matrix = @(
@@ -29,19 +30,19 @@ try {
     foreach ($entry in $matrix) {
         Write-Host "Building E HUD for Minecraft $($entry.Minecraft)..."
         & $JavaExe '-Dorg.gradle.appname=gradlew' '-classpath' $wrapperJar `
-            'org.gradle.wrapper.GradleWrapperMain' 'build' `
+            'org.gradle.wrapper.GradleWrapperMain' 'clean' 'build' `
             "-Pminecraft_version=$($entry.Minecraft)" `
             "-Pfabric_version=$($entry.Fabric)" `
             "-Pmodmenu_version=$($entry.ModMenu)" '--no-daemon'
         if ($LASTEXITCODE -ne 0) {
             throw "Build failed for Minecraft $($entry.Minecraft)."
         }
-        $jarName = "e-hud-$($entry.Minecraft)-0.1.0.jar"
+        $jarName = "e-hud-$($entry.Minecraft)-$modVersion.jar"
         Copy-Item -LiteralPath (Join-Path $projectRoot "build\libs\$jarName") `
             -Destination (Join-Path $releaseDir $jarName) -Force
     }
 
-    $checksums = Get-ChildItem -LiteralPath $releaseDir -Filter 'e-hud-*.jar' |
+    $checksums = Get-ChildItem -LiteralPath $releaseDir -Filter "e-hud-*-$modVersion.jar" |
         Sort-Object Name |
         ForEach-Object {
             $hash = Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName

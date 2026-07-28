@@ -1,5 +1,6 @@
 package dev.oolist.ehud.client.hud;
 
+import dev.oolist.ehud.EHud;
 import dev.oolist.ehud.client.config.ConfigManager;
 import dev.oolist.ehud.client.config.EHudConfig;
 import dev.oolist.ehud.client.EHudClient;
@@ -16,16 +17,43 @@ import net.minecraft.sounds.SoundEvents;
 public final class EHudRenderer {
     private static Inspection pinned;
     private static Inspection cached;
+    private static Object cachedLevel;
+    private static Object activeLevel;
     private static long lastScanTick = Long.MIN_VALUE;
     private static long lastWarningAt;
+    private static long lastRenderErrorAt;
     private static String lastWarningKey = "";
 
     private EHudRenderer() {
     }
 
     public static void render(GuiGraphicsExtractor graphics) {
+        try {
+            renderSafely(graphics);
+        } catch (RuntimeException exception) {
+            cached = null;
+            cachedLevel = null;
+            long now = System.currentTimeMillis();
+            if (now - lastRenderErrorAt >= 10_000L) {
+                lastRenderErrorAt = now;
+                EHud.LOGGER.error("E HUD skipped a frame after an unexpected inspection or rendering error.",
+                        exception);
+            }
+        }
+    }
+
+    private static void renderSafely(GuiGraphicsExtractor graphics) {
         Minecraft client = Minecraft.getInstance();
         EHudConfig config = ConfigManager.get();
+        if (client.level != activeLevel) {
+            cached = null;
+            cachedLevel = null;
+            lastScanTick = Long.MIN_VALUE;
+            if (!config.rememberPinnedTarget) {
+                pinned = null;
+            }
+            activeLevel = client.level;
+        }
         if (!config.enabled || VersionClientUi.hudHidden(client) || VersionClientUi.currentScreen(client) != null) {
             return;
         }
@@ -52,7 +80,12 @@ public final class EHudRenderer {
         if (pinned != null) {
             pinned = null;
         } else {
-            pinned = InspectionEngine.inspect(Minecraft.getInstance());
+            try {
+                pinned = InspectionEngine.inspect(Minecraft.getInstance());
+            } catch (RuntimeException exception) {
+                pinned = null;
+                EHud.LOGGER.error("Could not pin the current E HUD target.", exception);
+            }
         }
     }
 
@@ -174,8 +207,10 @@ public final class EHudRenderer {
         long tick = client.level == null ? 0L : client.level.getGameTime();
         int interval = Math.max(1, config.scanIntervalTicks);
         if (config.adaptivePerformance && config.maximumCheckedBlocks > 8192) interval *= 2;
-        if (cached == null || tick - lastScanTick >= interval || EHudClient.inspectHeld()) {
+        boolean worldChanged = client.level != cachedLevel || tick < lastScanTick;
+        if (cached == null || worldChanged || tick - lastScanTick >= interval || EHudClient.inspectHeld()) {
             cached = InspectionEngine.inspect(client);
+            cachedLevel = client.level;
             lastScanTick = tick;
         }
         return cached;

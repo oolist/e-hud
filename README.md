@@ -15,7 +15,7 @@ changelog, and license.
 
 ## Current release
 
-E HUD `0.1.0-alpha` supports:
+E HUD `0.1.1-alpha` supports:
 
 - Minecraft 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7,
   1.21.8, 1.21.9, 1.21.10, and 1.21.11
@@ -32,13 +32,13 @@ The `main` branch always contains the newest source. For every update:
 3. Update `VERSION_MATRIX.md`.
 4. Commit and push the changes.
 5. Create tags using `v<mod-version>-mc<minecraft-version>`, such as
-   `v0.1.0-alpha-mc1.21.11` or `v0.1.0-alpha-mc26.2`.
+   `v0.1.1-alpha-mc1.21.11` or `v0.1.1-alpha-mc26.2`.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repeatable update workflow.
 
 ## Links
 
-- [Modrinth](https://modrinth.com/project/ratzt04c)
+- [Modrinth](https://modrinth.com/mod/e-hud)
 - [Discord](https://discord.gg/ZYK4UzsHCr)
 
 Author: **oolist**

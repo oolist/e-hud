@@ -7,6 +7,10 @@ out/
 **/out/
 run/
 **/run/
+releases/
+**/releases/
+__pycache__/
+**/__pycache__/
 
 # IDE files
 .idea/
@@ -28,4 +32,7 @@ Thumbs.db
 .env.*
 *.pem
 *.key
+
+# Local build toolchains
+.tooling/
 

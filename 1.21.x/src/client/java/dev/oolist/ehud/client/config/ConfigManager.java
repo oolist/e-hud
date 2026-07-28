@@ -35,21 +35,33 @@ public final class ConfigManager {
         return config;
     }
 
-    public static void replace(EHudConfig replacement) {
+    public static synchronized void replace(EHudConfig replacement) {
+        if (replacement == null) {
+            EHud.LOGGER.warn("Tried to apply an empty E HUD configuration; using defaults instead.");
+            replacement = new EHudConfig();
+        }
         replacement.ensureDefaults();
         config = replacement;
     }
 
-    public static void load() {
+    public static synchronized void load() {
         try {
-            Files.createDirectories(ROOT);
-            Files.createDirectories(PRESET_DIR);
-            Files.createDirectories(BACKUP_DIR);
+            createDirectories();
             if (Files.exists(CONFIG_FILE)) {
-                EHudConfig loaded = GSON.fromJson(Files.readString(CONFIG_FILE), EHudConfig.class);
-                if (loaded != null) {
+                try {
+                    EHudConfig loaded = GSON.fromJson(
+                            Files.readString(CONFIG_FILE, StandardCharsets.UTF_8), EHudConfig.class);
+                    if (loaded == null) {
+                        throw new IOException("The configuration file was empty.");
+                    }
                     loaded.ensureDefaults();
                     config = loaded;
+                } catch (Exception invalidConfig) {
+                    Path backup = preserveInvalidConfig();
+                    EHud.LOGGER.error("Could not read E HUD configuration; preserved it at {} and restored defaults.",
+                            backup, invalidConfig);
+                    config = new EHudConfig();
+                    writeAtomically(CONFIG_FILE, GSON.toJson(config));
                 }
             } else {
                 save();
@@ -60,12 +72,13 @@ public final class ConfigManager {
         }
     }
 
-    public static void save() {
+    public static synchronized void save() {
         try {
-            Files.createDirectories(ROOT);
+            createDirectories();
+            config.ensureDefaults();
             maybeCreateScheduledBackup();
             writeAtomically(CONFIG_FILE, GSON.toJson(config));
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             EHud.LOGGER.error("Could not save E HUD configuration.", exception);
         }
     }
@@ -105,18 +118,22 @@ public final class ConfigManager {
     }
 
     public static EHudConfig importPreset(Path source) throws IOException {
-        EHudConfig imported = GSON.fromJson(Files.readString(source, StandardCharsets.UTF_8), EHudConfig.class);
-        if (imported == null) {
-            throw new IOException("Preset did not contain a valid E HUD configuration.");
+        try {
+            EHudConfig imported = GSON.fromJson(
+                    Files.readString(source, StandardCharsets.UTF_8), EHudConfig.class);
+            if (imported == null) {
+                throw new IOException("Preset did not contain a valid E HUD configuration.");
+            }
+            imported.ensureDefaults();
+            return imported;
+        } catch (RuntimeException exception) {
+            throw new IOException("Preset contains invalid E HUD configuration data.", exception);
         }
-        imported.ensureDefaults();
-        return imported;
     }
 
     public static Path createBackup(String reason) throws IOException {
         Files.createDirectories(BACKUP_DIR);
-        String name = BACKUP_NAME.format(Instant.now()) + "_" + sanitizeName(reason) + ".json";
-        Path destination = BACKUP_DIR.resolve(name);
+        Path destination = uniqueBackupPath(sanitizeName(reason));
         if (Files.exists(CONFIG_FILE)) {
             Files.copy(CONFIG_FILE, destination, StandardCopyOption.REPLACE_EXISTING);
         } else {
@@ -156,18 +173,48 @@ public final class ConfigManager {
 
     private static void writeAtomically(Path destination, String content) throws IOException {
         Files.createDirectories(destination.getParent());
-        Path temporary = destination.resolveSibling(destination.getFileName() + ".tmp");
-        Files.writeString(temporary, content, StandardCharsets.UTF_8);
+        Path temporary = Files.createTempFile(
+                destination.getParent(), destination.getFileName().toString() + ".", ".tmp");
         try {
-            Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING,
-                    StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException ignored) {
-            Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING);
+            Files.writeString(temporary, content, StandardCharsets.UTF_8);
+            try {
+                Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException ignored) {
+                Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temporary);
         }
     }
 
     private static String sanitizeName(String input) {
+        if (input == null) {
+            return "preset";
+        }
         String sanitized = input.replaceAll("[^a-zA-Z0-9._-]", "_");
         return sanitized.isBlank() ? "preset" : sanitized;
+    }
+
+    private static void createDirectories() throws IOException {
+        Files.createDirectories(ROOT);
+        Files.createDirectories(PRESET_DIR);
+        Files.createDirectories(BACKUP_DIR);
+    }
+
+    private static Path preserveInvalidConfig() throws IOException {
+        Path destination = uniqueBackupPath("invalid-config");
+        Files.copy(CONFIG_FILE, destination, StandardCopyOption.REPLACE_EXISTING);
+        return destination;
+    }
+
+    private static Path uniqueBackupPath(String reason) {
+        String prefix = BACKUP_NAME.format(Instant.now()) + "_" + reason;
+        Path destination = BACKUP_DIR.resolve(prefix + ".json");
+        int duplicate = 2;
+        while (Files.exists(destination)) {
+            destination = BACKUP_DIR.resolve(prefix + "_" + duplicate++ + ".json");
+        }
+        return destination;
     }
 }

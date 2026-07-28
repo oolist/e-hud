@@ -76,18 +76,52 @@ public final class EHudConfig {
     }
 
     public void ensureDefaults() {
+        schema = CURRENT_SCHEMA;
         if (modules == null) modules = new EnumMap<>(HudModule.class);
         if (individualSettings == null) individualSettings = new LinkedHashMap<>();
         if (elementSettings == null) elementSettings = new LinkedHashMap<>();
         if (serverProfiles == null) serverProfiles = new LinkedHashMap<>();
+        modules.entrySet().removeIf(entry -> entry.getKey() == null || entry.getValue() == null);
+        individualSettings.entrySet().removeIf(entry -> entry.getKey() == null || entry.getValue() == null);
+        elementSettings.entrySet().removeIf(entry -> entry.getKey() == null || entry.getValue() == null);
+        serverProfiles.entrySet().removeIf(entry -> entry.getKey() == null || entry.getValue() == null);
         if (gradientColors == null || gradientColors.size() < 2) {
             gradientColors = new java.util.ArrayList<>(List.of(0xFFFF8A21, 0xFFFFC23B, 0xFF42F57B, 0xFF20D978));
+        } else {
+            gradientColors.removeIf(java.util.Objects::isNull);
+            if (gradientColors.size() < 2) {
+                gradientColors = new java.util.ArrayList<>(List.of(primaryColor, accentColor));
+            }
         }
         if (favoriteSettings == null) favoriteSettings = new java.util.ArrayList<>();
         if (recentSettings == null) recentSettings = new java.util.ArrayList<>();
+        favoriteSettings.removeIf(value -> value == null || value.isBlank());
+        recentSettings.removeIf(value -> value == null || value.isBlank());
+        elementSettings.values().forEach(HudElementSettings::ensureDefaults);
         for (HudModule module : HudModule.values()) {
             modules.putIfAbsent(module, true);
         }
+        hudScale = finiteClamp(hudScale, 0.5F, 2.0F, 1.0F);
+        panelOpacity = finiteClamp(panelOpacity, 0.0F, 1.0F, 0.86F);
+        neonIntensity = finiteClamp(neonIntensity, 0.0F, 1.0F, 0.55F);
+        animationSpeed = finiteClamp(animationSpeed, 0.1F, 4.0F, 1.0F);
+        lineSpacing = finiteClamp(lineSpacing, 0.5F, 3.0F, 1.0F);
+        hudYOffset = clamp(hudYOffset, -10_000, 10_000);
+        hudXOffset = clamp(hudXOffset, -10_000, 10_000);
+        panelPadding = clamp(panelPadding, 0, 64);
+        maximumLines = clamp(maximumLines, 1, 64);
+        scanDistance = scanDistance < 0 ? -1 : clamp(scanDistance, 1, 512);
+        scanIntervalTicks = clamp(scanIntervalTicks, 1, 200);
+        maximumCheckedBlocks = clamp(maximumCheckedBlocks, 64, 65_536);
+        backupIntervalDays = clamp(backupIntervalDays, 1, 365);
+        activeProfile = defaultString(activeProfile, "Default");
+        gradientName = defaultString(gradientName, "Neon Grove");
+        anchor = defaultString(anchor, "HOTBAR_TOP");
+        fontStyle = defaultString(fontStyle, "MINECRAFT");
+        iconStyle = defaultString(iconStyle, "NEON");
+        borderStyle = defaultString(borderStyle, "THIN_GLOW");
+        backgroundStyle = defaultString(backgroundStyle, "DARK_GLASS");
+        alertSound = defaultString(alertSound, "EXPERIENCE_ORB");
         individualSettings.putIfAbsent("entity.health", true);
         individualSettings.putIfAbsent("entity.armor", true);
         individualSettings.putIfAbsent("entity.effects", true);
@@ -98,6 +132,18 @@ public final class EHudConfig {
         individualSettings.putIfAbsent("world.coordinates", true);
         individualSettings.putIfAbsent("world.biome", true);
         individualSettings.putIfAbsent("player.inventory_space", true);
+    }
+
+    private static int clamp(int value, int minimum, int maximum) {
+        return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    private static float finiteClamp(float value, float minimum, float maximum, float fallback) {
+        return Float.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : fallback;
+    }
+
+    private static String defaultString(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     public EHudConfig copy() {

@@ -1,4 +1,4 @@
-# Installing E HUD 0.1.0
+# Installing E HUD 0.1.1-alpha
 
 1. Install Fabric Loader for your exact Minecraft Java version.
 2. Install Fabric API for that version.
@@ -11,20 +11,20 @@ Minecraft 26.x requires Java 25.
 
 | Minecraft | Java | E HUD file |
 |---|---:|---|
-| 1.21 | 21 | `e-hud-1.21-0.1.0.jar` |
-| 1.21.1 | 21 | `e-hud-1.21.1-0.1.0.jar` |
-| 1.21.2 | 21 | `e-hud-1.21.2-0.1.0.jar` |
-| 1.21.3 | 21 | `e-hud-1.21.3-0.1.0.jar` |
-| 1.21.4 | 21 | `e-hud-1.21.4-0.1.0.jar` |
-| 1.21.5 | 21 | `e-hud-1.21.5-0.1.0.jar` |
-| 1.21.6 | 21 | `e-hud-1.21.6-0.1.0.jar` |
-| 1.21.7 | 21 | `e-hud-1.21.7-0.1.0.jar` |
-| 1.21.8 | 21 | `e-hud-1.21.8-0.1.0.jar` |
-| 1.21.9 | 21 | `e-hud-1.21.9-0.1.0.jar` |
-| 1.21.10 | 21 | `e-hud-1.21.10-0.1.0.jar` |
-| 1.21.11 | 21 | `e-hud-1.21.11-0.1.0.jar` |
-| 26.1 | 25 | `e-hud-26.1-0.1.0.jar` |
-| 26.2 | 25 | `e-hud-26.2-0.1.0.jar` |
+| 1.21 | 21 | `e-hud-1.21-0.1.1-alpha.jar` |
+| 1.21.1 | 21 | `e-hud-1.21.1-0.1.1-alpha.jar` |
+| 1.21.2 | 21 | `e-hud-1.21.2-0.1.1-alpha.jar` |
+| 1.21.3 | 21 | `e-hud-1.21.3-0.1.1-alpha.jar` |
+| 1.21.4 | 21 | `e-hud-1.21.4-0.1.1-alpha.jar` |
+| 1.21.5 | 21 | `e-hud-1.21.5-0.1.1-alpha.jar` |
+| 1.21.6 | 21 | `e-hud-1.21.6-0.1.1-alpha.jar` |
+| 1.21.7 | 21 | `e-hud-1.21.7-0.1.1-alpha.jar` |
+| 1.21.8 | 21 | `e-hud-1.21.8-0.1.1-alpha.jar` |
+| 1.21.9 | 21 | `e-hud-1.21.9-0.1.1-alpha.jar` |
+| 1.21.10 | 21 | `e-hud-1.21.10-0.1.1-alpha.jar` |
+| 1.21.11 | 21 | `e-hud-1.21.11-0.1.1-alpha.jar` |
+| 26.1 | 25 | `e-hud-26.1-0.1.1-alpha.jar` |
+| 26.2 | 25 | `e-hud-26.2-0.1.1-alpha.jar` |
 
 ## Optional server installation
 

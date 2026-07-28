@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.1-alpha
+
+### Recovery
+
+- Added automatic recovery for corrupted or empty configuration files.
+- Invalid configurations are now preserved in the E HUD backup folder before safe defaults are restored.
+- Added validation and safe limits for HUD scale, opacity, animation, spacing, offsets, scan settings, backup schedules, gradients, profiles, and per-element settings.
+- Improved atomic configuration and preset writes so interrupted saves are less likely to damage player settings.
+- Invalid preset files now produce a clear import error instead of destabilizing the settings screen.
+- Unexpected target-inspection or HUD-rendering errors now skip the affected frame and write a rate-limited diagnostic to the log instead of crashing the client.
+- Fixed cached and unremembered pinned target information surviving world or server changes.
+- Fixed the release verifier so it checks the embedded E HUD version in every jar.
+- Updated the embedded project and source links to the official Modrinth and GitHub pages.
+- Added dedicated alpha builds for Minecraft 1.21 through 1.21.11, plus Minecraft 26.1 and 26.2.
+
 ## 0.1.0
 
 - Initial E HUD release.
