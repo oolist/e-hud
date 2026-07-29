@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.error
@@ -21,6 +22,7 @@ YOUTUBE_FEED = (
 )
 MODRINTH_VERSIONS = "https://api.modrinth.com/v2/project/e-hud/version"
 MODRINTH_PROJECT = "https://modrinth.com/mod/e-hud"
+MODRINTH_VERSIONS_PAGE = f"{MODRINTH_PROJECT}/versions"
 STATE_FILE = Path(".github/notification-state.json")
 USER_AGENT = "E-HUD-Discord-Notifier/1.0 (https://github.com/oolist/e-hud)"
 
@@ -179,14 +181,6 @@ def youtube_payload(upload: dict[str, str], role_id: str, short: bool) -> dict[s
     }
 
 
-def newest_file(version: dict[str, Any]) -> dict[str, Any] | None:
-    files = version.get("files")
-    if not isinstance(files, list) or not files:
-        return None
-    primary = next((item for item in files if item.get("primary")), None)
-    return primary or files[0]
-
-
 def clean_changelog(value: Any) -> str:
     changelog = str(value or "").strip()
     if not changelog:
@@ -196,29 +190,53 @@ def clean_changelog(value: Any) -> str:
     return changelog
 
 
-def modrinth_payload(version: dict[str, Any], role_id: str) -> dict[str, Any]:
-    version_id = str(version.get("id", ""))
-    version_number = str(version.get("version_number") or "Unknown")
-    version_name = str(version.get("name") or version_number)
-    release_type = str(version.get("version_type") or "release").capitalize()
-    game_versions = ", ".join(map(str, version.get("game_versions") or []))
+def base_modrinth_version(version: dict[str, Any]) -> str:
+    """Return the shared release number used by all Minecraft-specific builds."""
+    version_number = str(version.get("version_number") or "Unknown").strip()
+    return version_number.split("+mc", 1)[0]
+
+
+def minecraft_version_key(value: str) -> tuple[tuple[int, ...], str]:
+    return tuple(int(part) for part in re.findall(r"\d+", value)), value
+
+
+def group_modrinth_releases(
+    versions: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for version in versions:
+        groups.setdefault(base_modrinth_version(version), []).append(version)
+    return groups
+
+
+def modrinth_payload(
+    release_number: str,
+    versions: list[dict[str, Any]],
+    role_id: str,
+) -> dict[str, Any]:
+    representative = max(
+        versions,
+        key=lambda item: len(str(item.get("changelog") or "").strip()),
+    )
+    release_type = str(representative.get("version_type") or "release").capitalize()
+    all_game_versions = {
+        str(game_version)
+        for version in versions
+        for game_version in (version.get("game_versions") or [])
+    }
+    game_versions = ", ".join(
+        sorted(all_game_versions, key=minecraft_version_key)
+    )
     if len(game_versions) > 1000:
         game_versions = game_versions[:997].rstrip() + "..."
 
-    page_url = f"{MODRINTH_PROJECT}/version/{version_id}"
-    file = newest_file(version)
-    download_url = str(file.get("url")) if file else page_url
-    filename = str(file.get("filename") or "Download")
-    if len(filename) > 100:
-        filename = filename[:97] + "..."
-
     embed: dict[str, Any] = {
-        "title": f"E HUD {version_name}"[:256],
-        "url": page_url,
-        "description": clean_changelog(version.get("changelog")),
+        "title": f"E HUD {release_number}"[:256],
+        "url": MODRINTH_VERSIONS_PAGE,
+        "description": clean_changelog(representative.get("changelog")),
         "color": 0x39FF88,
         "fields": [
-            {"name": "Version", "value": version_number[:1024], "inline": True},
+            {"name": "Version", "value": release_number[:1024], "inline": True},
             {"name": "Release type", "value": release_type[:1024], "inline": True},
             {
                 "name": "Minecraft versions",
@@ -226,14 +244,19 @@ def modrinth_payload(version: dict[str, Any], role_id: str) -> dict[str, Any]:
                 "inline": False,
             },
             {
+                "name": "Fabric builds",
+                "value": str(len(versions)),
+                "inline": True,
+            },
+            {
                 "name": "Download",
-                "value": f"[{filename}]({download_url})"[:1024],
+                "value": f"[Choose your Minecraft version]({MODRINTH_VERSIONS_PAGE})",
                 "inline": False,
             },
         ],
         "footer": {"text": "E HUD on Modrinth"},
     }
-    timestamp = discord_timestamp(str(version.get("date_published") or ""))
+    timestamp = discord_timestamp(str(representative.get("date_published") or ""))
     if timestamp:
         embed["timestamp"] = timestamp
 
@@ -292,31 +315,39 @@ def process_modrinth(state: dict[str, Any]) -> None:
         raise RuntimeError("Unexpected response from Modrinth")
 
     current_ids = [str(version.get("id")) for version in versions if version.get("id")]
+    release_groups = group_modrinth_releases(versions)
+    current_releases = list(release_groups)
     known_ids = state.get("modrinth_ids")
-    if not isinstance(known_ids, list):
+    known_releases = state.get("modrinth_releases")
+    if not isinstance(known_ids, list) or not isinstance(known_releases, list):
         state["modrinth_ids"] = current_ids[:200]
-        print("Initialized Modrinth state without posting old releases")
+        state["modrinth_releases"] = current_releases[:100]
+        print("Initialized grouped Modrinth state without reposting old releases")
         return
 
-    known = {str(item) for item in known_ids}
-    unseen = [
-        version
-        for version in versions
-        if version.get("id") and str(version["id"]) not in known
+    known_release_set = {str(item) for item in known_releases}
+    unseen_releases = [
+        release_number
+        for release_number in reversed(current_releases)
+        if release_number not in known_release_set
     ]
-    unseen.sort(key=lambda item: str(item.get("date_published") or ""))
 
-    webhook = require_env("DISCORD_MODRINTH_WEBHOOK") if unseen else ""
-    role_id = require_env("MODRINTH_ROLE_ID") if unseen else ""
-    for version in unseen[-10:]:
+    webhook = require_env("DISCORD_MODRINTH_WEBHOOK") if unseen_releases else ""
+    role_id = require_env("MODRINTH_ROLE_ID") if unseen_releases else ""
+    for release_number in unseen_releases[-10:]:
         post_webhook(
             webhook,
-            modrinth_payload(version, role_id),
-            f"Modrinth {version.get('version_number', 'release')}",
+            modrinth_payload(
+                release_number,
+                release_groups[release_number],
+                role_id,
+            ),
+            f"Modrinth {release_number}",
         )
 
     state["modrinth_ids"] = current_ids[:200]
-    if not unseen:
+    state["modrinth_releases"] = current_releases[:100]
+    if not unseen_releases:
         print("No new Modrinth releases")
 
 
