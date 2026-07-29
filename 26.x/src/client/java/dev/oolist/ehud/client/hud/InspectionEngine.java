@@ -34,16 +34,18 @@ public final class InspectionEngine {
         if (!(hit instanceof EntityHitResult) && distance > 5.0D) {
             hit = client.player.pick(distance, 1.0F, false);
         }
-        if (hit instanceof EntityHitResult entityHit
+        if (hit.getType() == HitResult.Type.ENTITY
+                && hit instanceof EntityHitResult entityHit
                 && (config.modules.getOrDefault(HudModule.ANIMALS, true)
                 || config.modules.getOrDefault(HudModule.COMBAT, true))) {
             return inspectEntity(entityHit.getEntity(), config);
         }
-        if (hit instanceof BlockHitResult blockHit
+        if (hit.getType() == HitResult.Type.BLOCK
+                && hit instanceof BlockHitResult blockHit
                 && blockInspectionEnabled(config)) {
             return inspectBlock(client, blockHit.getBlockPos(), config);
         }
-        return inspectEnvironment(client, config);
+        return null;
     }
 
     private static Inspection inspectEntity(Entity entity, EHudConfig config) {
@@ -91,9 +93,6 @@ public final class InspectionEngine {
                 net.minecraft.world.phys.Vec3.atCenterOf(pos), net.minecraft.core.Direction.UP, pos).getDirection());
         if (signal > 0) {
             result.add("Redstone", Integer.toString(signal), InfoLine.Severity.INFORMATION);
-        }
-        if (config.showTechnicalDetails) {
-            result.add("Properties", Integer.toString(state.getProperties().size()));
         }
         BlockDetailProvider.append(result, client.level, pos, state);
         return result;

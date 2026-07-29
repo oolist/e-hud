@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $wrapperJar = Join-Path $projectRoot 'gradle\wrapper\gradle-wrapper.jar'
 $releaseDir = Join-Path $projectRoot 'releases'
-$modVersion = '0.1.1-alpha'
+$modVersion = '0.1.2-alpha'
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
 $matrix = @(

@@ -8,7 +8,7 @@ if ([string]::IsNullOrWhiteSpace($ReleaseDir)) {
     $ReleaseDir = Join-Path $projectRoot 'releases'
 }
 $expectedVersions = @('26.1', '26.2')
-$modVersion = '0.1.1-alpha'
+$modVersion = '0.1.2-alpha'
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 foreach ($version in $expectedVersions) {

@@ -156,14 +156,22 @@ final class BlockDetailProvider {
         if (facing != null) {
             result.add("Facing", facing);
         }
+        appendBooleanState(result, state, "snowy", "Snow cover", "With snow", "Without snow");
         String powered = property(state, "powered");
         if (powered != null) {
             result.add("Powered", "true".equals(powered) ? "Yes" : "No");
         }
         String waterlogged = property(state, "waterlogged");
-        if (waterlogged != null && "true".equals(waterlogged)) {
-            result.add("Waterlogged", "Yes", InfoLine.Severity.INFORMATION);
+        if (waterlogged != null) {
+            result.add("Waterlogged", "true".equals(waterlogged) ? "Yes" : "No",
+                    "true".equals(waterlogged) ? InfoLine.Severity.INFORMATION : InfoLine.Severity.NORMAL);
         }
+        appendBooleanState(result, state, "open", "Open", "Yes", "No");
+        appendBooleanState(result, state, "lit", "Lit", "Yes", "No");
+        appendBooleanState(result, state, "occupied", "Occupancy", "Occupied", "Available");
+        appendBooleanState(result, state, "persistent", "Leaves", "Player placed", "Natural");
+        appendBooleanState(result, state, "hanging", "Placement", "Hanging", "Standing");
+        appendBooleanState(result, state, "attached", "Attachment", "Attached", "Not attached");
         String age = property(state, "age");
         if (age != null) {
             int maximum = maximumIntegerProperty(state, "age");
@@ -180,6 +188,14 @@ final class BlockDetailProvider {
         String level = property(state, "level");
         if (level != null) {
             result.add("Level", level);
+        }
+    }
+
+    private static void appendBooleanState(Inspection result, BlockState state, String propertyName,
+                                           String label, String trueText, String falseText) {
+        String value = property(state, propertyName);
+        if (value != null) {
+            result.add(label, "true".equals(value) ? trueText : falseText);
         }
     }
 

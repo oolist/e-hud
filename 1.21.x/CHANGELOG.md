@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.2-alpha
+
+### Clear Sight
+
+- Fixed the target HUD showing Air when the crosshair is not pointing at a block or entity.
+- Replaced the technical block-property count with useful, readable block-state details.
+- Grass blocks now show `With snow` or `Without snow`.
+- Added readable wording for powered, waterlogged, open, lit, occupied, persistent, hanging, and attached block states.
+- Added dedicated Fabric alpha builds for Minecraft 1.21 through 1.21.11.
+
 ## 0.1.1-alpha
 
 ### Recovery

@@ -20,8 +20,7 @@ changelog, and license.
 
 ## Current release
 
-
-E HUD `0.1.1-alpha` supports:
+E HUD `0.1.2-alpha` supports:
 
 
 - Minecraft 1.21, 1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7,
@@ -43,7 +42,7 @@ The `main` branch always contains the newest source. For every update:
 3. Update `VERSION_MATRIX.md`.
 4. Commit and push the changes.
 5. Create tags using `v<mod-version>-mc<minecraft-version>`, such as
-   `v0.1.1-alpha-mc1.21.11` or `v0.1.1-alpha-mc26.2`.
+   `v0.1.2-alpha-mc1.21.11` or `v0.1.2-alpha-mc26.2`.
 
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the repeatable update workflow.
