@@ -1,5 +1,19 @@
 {
   "modrinth_ids": [
+    "RJrZJb34",
+    "I9VIfUdi",
+    "qiZYGTij",
+    "wfyHkZyN",
+    "jniGFv63",
+    "zrwQAB7T",
+    "DmhdWQeB",
+    "z3TLbOdH",
+    "FtJFJQTD",
+    "PfXAO4lO",
+    "knsdcC2e",
+    "UEO5ydhb",
+    "itZQ2TDs",
+    "kfKAHUP8",
     "ipIDKWVb",
     "cwowD4eU",
     "WWCSpNtK",
@@ -44,6 +58,7 @@
     "rVrkv36Q"
   ],
   "modrinth_releases": [
+    "0.1.3-alpha",
     "0.1.2-alpha",
     "0.1.1-alpha",
     "0.1.0"
