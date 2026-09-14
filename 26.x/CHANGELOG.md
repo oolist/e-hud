@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3-alpha
+
+### Focused View
+
+- E HUD now uses the player's block-interaction reach as its default inspection range.
+- Added an 8-block custom scan option alongside the existing longer scan ranges.
+- Custom scan ranges still respect the player's simulation-distance limit.
+- The HUD stays hidden when the crosshair is not over a block or entity.
+
 ## 0.1.2-alpha
 
 ### Clear Sight

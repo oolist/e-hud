@@ -200,7 +200,15 @@ public final class InspectionEngine {
             if (value instanceof Number number) simulationChunks = number.intValue();
         } catch (ReflectiveOperationException ignored) { }
         int maximum = Math.max(16, simulationChunks * 16);
-        return config.scanDistance < 0 ? maximum : Math.min(Math.max(1, config.scanDistance), maximum);
+        return config.scanDistance < 0 ? playerReach(client) : Math.min(Math.max(1, config.scanDistance), maximum);
+    }
+
+    private static double playerReach(Minecraft client) {
+        try {
+            Object value = client.player.getClass().getMethod("blockInteractionRange").invoke(client.player);
+            if (value instanceof Number number) return Math.max(1.0D, number.doubleValue());
+        } catch (ReflectiveOperationException ignored) { }
+        return 4.5D;
     }
 
     private static boolean blockInspectionEnabled(EHudConfig config) {

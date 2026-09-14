@@ -48,7 +48,7 @@ final class PerformanceScreen extends Screen {
         EHudScreenStyle.background(graphics, width, height);
         EHudScreenStyle.header(graphics, font, width, session.working(), "PERFORMANCE & BACKUPS");
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        graphics.centeredText(font, "Default scan range follows your simulation distance and never exceeds it.",
+        graphics.centeredText(font, "Default scan range follows your block-interaction reach. Custom ranges never exceed simulation distance.",
                 width / 2, 236, 0xFF9FD8AE);
         graphics.centeredText(font, "Higher limits may cost performance; adaptive mode can reduce work automatically.",
                 width / 2, 250, 0xFF94A89A);
@@ -57,6 +57,6 @@ final class PerformanceScreen extends Screen {
     @Override public void onClose() { VersionClientUi.setScreen(minecraft, parent); }
     private void changed() { session.changed(); rebuildWidgets(); }
     private static String onOff(boolean value) { return value ? "ON" : "OFF"; }
-    private static String distance(int value) { return value < 0 ? "Simulation distance" : value + " blocks"; }
-    private static int nextDistance(int value) { return switch (value) { case -1 -> 16; case 16 -> 32; case 32 -> 64; case 64 -> 128; default -> -1; }; }
+    private static String distance(int value) { return value < 0 ? "Player reach" : value + " blocks"; }
+    private static int nextDistance(int value) { return switch (value) { case -1 -> 8; case 8 -> 16; case 16 -> 32; case 32 -> 64; case 64 -> 128; default -> -1; }; }
 }
